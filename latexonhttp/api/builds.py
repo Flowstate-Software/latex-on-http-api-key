@@ -264,10 +264,16 @@ def compiler_latex():
             error = persist_resource_to_workspace(workspace_id, resource, data)
             if error:
                 return error
-            # Input cache forwarding.
-            is_ok, cache_response = forward_resource_to_cache(resource, data)
-            if not is_ok or cache_response:
-                return cache_response
+            # Input cache forwarding - make it optional
+            try:
+                is_ok, cache_response = forward_resource_to_cache(resource, data)
+                if not is_ok:
+                    logger.warning("Cache forwarding failed for resource %s: %s", resource["build_path"], cache_response)
+                elif cache_response:
+                    logger.warning("Cache forwarding returned error for resource %s: %s", resource["build_path"], cache_response)
+            except Exception as e:
+                logger.warning("Cache forwarding failed for resource %s: %s", resource["build_path"], str(e))
+            return None
 
         # Input cache provider.
         error = fetch_resources(
