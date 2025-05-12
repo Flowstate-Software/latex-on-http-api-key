@@ -7,8 +7,9 @@
     :copyright: (c) 2019 Yoan Tournade.
     :license: AGPL, see LICENSE for more details.
 """
-from flask import Blueprint, url_for
+from flask import Blueprint, url_for, request, jsonify
 from texlivemetadata import list_installed_packages, get_package_info, get_ctan_link
+from latexonhttp.auth import require_api_key
 
 packages_app = Blueprint("packages", __name__)
 
@@ -20,6 +21,7 @@ packages_app = Blueprint("packages", __name__)
 
 
 @packages_app.route("", methods=["GET"])
+@require_api_key
 def packages_list():
     packages = [
         {
@@ -34,6 +36,7 @@ def packages_list():
 
 
 @packages_app.route("/<package_name>", methods=["GET"])
+@require_api_key
 def packages_info(package_name):
     package_info = get_package_info(package_name)
     if not package_info:

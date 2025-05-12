@@ -7,13 +7,15 @@
     :copyright: (c) 2019 Yoan Tournade.
     :license: AGPL, see LICENSE for more details.
 """
-from flask import Blueprint
+from flask import Blueprint, request, jsonify
 from fclist import fclist
+from latexonhttp.auth import require_api_key
 
 fonts_app = Blueprint("fonts", __name__)
 
 
 @fonts_app.route("", methods=["GET"])
+@require_api_key
 def fonts_list():
     fonts = []
     for font in fclist():

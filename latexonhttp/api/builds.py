@@ -13,7 +13,7 @@ import pprint
 import json
 import glom
 import cerberus
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from latexonhttp.compiler import (
     latexToPdf,
     AVAILABLE_LATEX_COMPILERS,
@@ -38,6 +38,7 @@ from latexonhttp.caching.resources import (
     forward_resource_to_cache,
     get_resource_from_cache,
 )
+from latexonhttp.auth import require_api_key
 
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,7 @@ input_spec_validator = cerberus.Validator(input_spec_schema)
 
 
 @builds_app.route("/sync", methods=["GET", "POST"])
+@require_api_key
 def compiler_latex():
     input_spec = None
     error_in_try_block = None
