@@ -275,6 +275,7 @@ def compiler_latex():
         )
         if error:
             error_compilation = error
+            logger.error("Resource fetch error: %s", error)
             return error, 400
         # TODO
         # - Process build global signature/hash (compiler, resource hashes, other options...)
@@ -302,6 +303,7 @@ def compiler_latex():
 
         if not latexToPdfOutput["pdf"]:
             error_compilation = latexToPdfOutput["logs"]
+            logger.error("LaTeX compilation error: %s", latexToPdfOutput["logs"])
             return (
                 {"error": "COMPILATION_ERROR", "logs": latexToPdfOutput["logs"]},
                 400,
@@ -348,4 +350,7 @@ def compiler_latex():
             or (error_in_try_block is None and error_compilation is None)
         ):
             if workspace_id:
+                logger.info("Deleting workspace %s", workspace_id)
                 remove_workspace(workspace_id)
+            else:
+                logger.warning("No workspace to delete")

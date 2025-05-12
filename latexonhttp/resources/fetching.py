@@ -46,47 +46,44 @@ def fetcher_url_file(resource, _get_from_cache):
             len(response.content),
         )
         if response.status_code >= 300:
-            return (
-                None,
-                {
-                    "error": "RESOURCE_FETCH_FAILURE",
-                    "fetch_error": {
-                        "type": "http_error",
-                        "http_code": response.status_code,
-                        "http_response_content": response.text,
-                    },
-                    "resource": resource,
+            error_msg = {
+                "error": "RESOURCE_FETCH_FAILURE",
+                "fetch_error": {
+                    "type": "http_error",
+                    "http_code": response.status_code,
+                    "http_response_content": response.text,
                 },
-            )
+                "resource": resource,
+            }
+            logger.error("HTTP error fetching %s: %s", url, error_msg)
+            return None, error_msg
         return response.content, None
     except requests.exceptions.Timeout as te:
-        return (
-            None,
-            {
-                "error": "RESOURCE_FETCH_FAILURE",
-                "fetch_error": {
-                    "type": "request_timeout",
-                    "exception_content": str(te),
-                    "http_code": None,
-                    "http_response_content": None,
-                },
-                "resource": resource,
+        error_msg = {
+            "error": "RESOURCE_FETCH_FAILURE",
+            "fetch_error": {
+                "type": "request_timeout",
+                "exception_content": str(te),
+                "http_code": None,
+                "http_response_content": None,
             },
-        )
+            "resource": resource,
+        }
+        logger.error("Timeout fetching %s: %s", url, error_msg)
+        return None, error_msg
     except requests.exceptions.ConnectionError as cee:
-        return (
-            None,
-            {
-                "error": "RESOURCE_FETCH_FAILURE",
-                "fetch_error": {
-                    "type": "connection_error",
-                    "exception_content": str(cee),
-                    "http_code": None,
-                    "http_response_content": None,
-                },
-                "resource": resource,
+        error_msg = {
+            "error": "RESOURCE_FETCH_FAILURE",
+            "fetch_error": {
+                "type": "connection_error",
+                "exception_content": str(cee),
+                "http_code": None,
+                "http_response_content": None,
             },
-        )
+            "resource": resource,
+        }
+        logger.error("Connection error fetching %s: %s", url, error_msg)
+        return None, error_msg
 
 
 def fetcher_hash_cache(resource, get_from_cache):
@@ -126,11 +123,15 @@ def fetch_resources(resources, on_fetched, get_from_cache=None):
     for resource in resources:
         resource_fetcher = FETCHERS.get(resource["type"])
         if not resource_fetcher:
-            return {"error": "FETCH_METHOD_NOT_SUPPORTED", "method": resource["type"]}
+            error_msg = {"error": "FETCH_METHOD_NOT_SUPPORTED", "method": resource["type"]}
+            logger.error("Unsupported fetch method: %s", error_msg)
+            return error_msg
         # Catch fetch error.
         fetched_data, fetch_error = resource_fetcher(resource, get_from_cache)
         if fetch_error:
+            logger.error("Fetch error for resource %s: %s", resource, fetch_error)
             return fetch_error
         on_fetched_error = on_fetched(resource, fetched_data)
         if on_fetched_error:
+            logger.error("Error in on_fetched for resource %s: %s", resource, on_fetched_error)
             return on_fetched_error
