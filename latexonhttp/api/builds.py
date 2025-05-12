@@ -126,6 +126,9 @@ input_spec_validator = cerberus.Validator(input_spec_schema)
 @builds_app.route("/sync", methods=["GET", "POST"])
 def compiler_latex():
     input_spec = None
+    error_in_try_block = None
+    error_compilation = None
+    workspace_id = None
 
     # TODO Allows mixed APIs?
     # for eg. using GET/param to specify the compiler
@@ -251,8 +254,6 @@ def compiler_latex():
     # -------------
 
     workspace_id = create_workspace(normalized_resources)
-    error_in_try_block = None
-    error_compilation = None
 
     try:
 
@@ -273,6 +274,7 @@ def compiler_latex():
             normalized_resources, on_fetched, get_from_cache=get_resource_from_cache
         )
         if error:
+            error_compilation = error
             return error, 400
         # TODO
         # - Process build global signature/hash (compiler, resource hashes, other options...)
@@ -340,14 +342,10 @@ def compiler_latex():
         return ({"error": "SERVER_ERROR"}, 500)
 
     finally:
-        # -------------
-        # Cleanup.
-        # -------------
-
-        # TODO Option to let workspace on failure
-        # from env.
+        # Only delete workspace if we don't want to keep it on error
         if KEEP_WORKSPACE_DIR is False and (
             KEEP_WORKSPACE_DIR_ON_ERROR is False
             or (error_in_try_block is None and error_compilation is None)
         ):
-            remove_workspace(workspace_id)
+            if workspace_id:
+                remove_workspace(workspace_id)
