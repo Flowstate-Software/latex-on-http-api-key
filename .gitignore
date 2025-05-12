@@ -114,3 +114,6 @@ examples/**/*.bcf
 examples/**/*.run.xml
 
 samples/**/*.log
+
+hello_world.pdf
+test.render.curl.txt

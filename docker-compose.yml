@@ -12,6 +12,7 @@ services:
     environment:
       # SENTRY_DSN: 
       CACHE_HOST: cache
+      KEEP_WORKSPACE_DIR_ON_ERROR: 1
   cache:
     build:
       context: .
